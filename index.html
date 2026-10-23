@@ -91,7 +91,7 @@
         </div>
         <div>
           <h1 class="text-xl font-bold leading-tight">Entrega Flash</h1>
-          <p class="text-xs text-emerald-100 font-medium">Uber de Encomendas • Multi-Paradas</p>
+          <p class="text-xs text-emerald-100 font-medium">Uber de Encomendas • Key CartoDB Ativada</p>
         </div>
       </div>
       <button onclick="toggleHistoryModal()" class="bg-emerald-700 hover:bg-emerald-800 text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 border border-emerald-500/30">
@@ -387,6 +387,10 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
+    // --- API KEY & TILE URL CONFIGURATION ---
+    const CARTO_KEY = 'cb1_4t3z_1_791656e29940ca330ce1c4c9';
+    const TILE_URL = `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${CARTO_KEY}`;
+
     // --- APP STATE & PRICING CONFIG ---
     const BASE_FARE = 7.00;          // Base fare fee in BRL
     const KM_RATE = 2.50;            // Fee per km driven
@@ -429,30 +433,29 @@
       }
     };
 
-    // --- LEAFLET MAP SETUP (WITH CARTO + OSM-FR FALLBACK) ---
+    // --- LEAFLET MAP SETUP WITH CARTO KEY TILE ---
     function initMap() {
       map = L.map('map', { zoomControl: false }).setView([DEFAULT_LAT, DEFAULT_LNG], 13);
 
-      // Primary Tile Layer: CartoDB Voyager (Reliable, high-availability, no 403 blocks)
-      const cartoTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      // Primary Tile Layer: CartoDB Voyager using user's explicit key parameter
+      const cartoKeyTileLayer = L.tileLayer(TILE_URL, {
         maxZoom: 19,
         subdomains: ['a', 'b', 'c', 'd'],
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       });
 
       // Fallback Tile Layer: OpenStreetMap France
-      const osmFrTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+      const fallbackTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         maxZoom: 20,
         attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       });
 
-      // Add primary layer and listen for tile load errors to activate fallback automatically
-      cartoTileLayer.addTo(map);
+      cartoKeyTileLayer.addTo(map);
 
-      cartoTileLayer.on('tileerror', function() {
-        if (map.hasLayer(cartoTileLayer)) {
-          map.removeLayer(cartoTileLayer);
-          osmFrTileLayer.addTo(map);
+      cartoKeyTileLayer.on('tileerror', function() {
+        if (map.hasLayer(cartoKeyTileLayer)) {
+          map.removeLayer(cartoKeyTileLayer);
+          fallbackTileLayer.addTo(map);
         }
       });
 
